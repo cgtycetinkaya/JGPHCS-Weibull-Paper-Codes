@@ -1,0 +1,339 @@
+x<-c(0.56631,0.27079,0.51648,0.82303,0.22653,0.36770,0.18542,0.44187,
+     0.61857,0.54611,0.26820,0.31533,0.80923,0.21886,0.58397,0.30484,
+     0.12908,0.53745,0.49628,0.16787,0.30699,0.17825,0.37002,0.16820,
+     0.55461,0.36080,0.26097,0.25429,0.49551,0.18768)
+y<-c(0.69373,0.70466,0.32383,0.77817,0.12306,0.63766,0.38343,0.15148,
+     0.10894,0.05016,0.67149,0.18316,0.25744,0.72723,0.29127,0.10115,
+     0.37642,0.16340,0.14138,0.70074,0.26290,0.35324,0.42211,0.04393,
+     0.59048,0.21213,0.30390,0.50660,0.53055,0.17725)
+library(writexl)
+m<-length(x);n<-length(y);BOOT<-10000;MCMC<-MCN<-10000
+thinning<-seq(10,MCMC,10)
+N<-n+m
+set.seed(1954)
+k<-42;r<-52;TP<-0.7;R<-c(N-r,rep(0,r-1)) ##CS_I
+
+
+fbet1<-function(par1){
+  W11<-sum((w^par1)*(z+s))+(TP^par1)*RR1
+  W11t<-sum((w^par1)*log(w)*(z+s))+(TP^par1)*RR1*log(TP)
+  d1/par1+sum(z*log(w))-d1*W11t/W11
+}
+
+fbet1b<-function(par1){
+  W11<-sum(((w^par1)*(z+s))[1:(D1s-1)])+((w[D1s])^par1)*(z[D1s]+(m-d1-sum(s[1:(D1s-1)])))
+  W11t<-sum(((w^par1)*log(w)*(z+s))[1:(D1s-1)])+((w[D1s])^par1)*log(w[D1s])*(z[D1s]+(m-d1-sum(s[1:(D1s-1)])))
+  d1/par1+sum(z*log(w))-d1*W11t/W11
+}
+
+fbet2<-function(par2){
+  W21<-sum((w^par2)*(1-z+q))+(TP^par2)*RR2
+  W21t<-sum((w^par2)*log(w)*(1-z+q))+(TP^par2)*RR2*log(TP)
+  d2/par2+sum((1-z)*log(w))-d2*W21t/W21
+}
+
+fbet2b<-function(par2){
+  W21<-sum(((w^par2)*(1-z+q))[1:(D1s-1)])+((w[D1s])^par2)*((1-z)[D1s]+(n-d2-sum(q[1:(D1s-1)])))
+  W21t<-sum(((w^par2)*log(w)*(1-z+q))[1:(D1s-1)])+((w[D1s])^par2)*log(w[D1s])*((1-z)[D1s]+(n-d2-sum(q[1:(D1s-1)])))
+  d2/par2+sum((1-z)*log(w))-d2*W21t/W21
+}
+
+fbet1_boot<-function(par1){
+  W11<-sum((wb^par1)*(zb+sb))+(TP^par1)*RR1b
+  W11t<-sum((wb^par1)*log(wb)*(zb+sb))+(TP^par1)*RR1b*log(TP)
+  d1b/par1+sum(zb*log(wb))-d1b*W11t/W11
+}
+
+fbet1b_boot<-function(par1){
+  W11<-sum(((wb^par1)*(zb+sb))[1:(D1sb-1)])+((wb[D1s])^par1)*(zb[D1sb]+(m-d1b-sum(sb[1:(D1sb-1)])))
+  W11t<-sum(((wb^par1)*log(wb)*(zb+sb))[1:(D1sb-1)])+((wb[D1sb])^par1)*log(wb[D1sb])*(zb[D1sb]+(m-d1b-sum(sb[1:(D1sb-1)])))
+  d1b/par1+sum(zb*log(wb))-d1b*W11t/W11
+}
+
+fbet2_boot<-function(par2){
+  W21<-sum((wb^par2)*(1-zb+qb))+(TP^par2)*RR2b
+  W21t<-sum((wb^par2)*log(wb)*(1-zb+qb))+(TP^par2)*RR2b*log(TP)
+  d2b/par2+sum((1-zb)*log(wb))-d2b*W21t/W21
+}
+
+fbet2b_boot<-function(par2){
+  W21<-sum(((wb^par2)*(1-zb+qb))[1:(D1sb-1)])+((wb[D1sb])^par2)*((1-zb)[D1sb]+(n-d2b-sum(qb[1:(D1sb-1)])))
+  W21t<-sum(((wb^par2)*log(wb)*(1-zb+qb))[1:(D1sb-1)])+((wb[D1sb])^par2)*log(wb[D1sb])*((1-zb)[D1sb]+(n-d2b-sum(qb[1:(D1sb-1)])))
+  d2b/par2+sum((1-zb)*log(wb))-d2b*W21t/W21
+}
+
+fb_bys1a<-function(beta1,aalfa){
+  ksia<-sum((z+s)*(w^beta1))+RR1*(TP^beta1)
+  (beta1^(d1-1))*exp(beta1*(sum(z*log(w))))*exp(-aalfa*ksia)
+}
+
+fb_bys1b<-function(beta1,aalfa){
+  ksia<-sum((z+s)*(w^beta1))+RR1*(TP^beta1)
+  (beta1^(a3+d1-1))*exp(beta1*(sum(z*log(w))-b3))*exp(-aalfa*ksia)
+}
+
+fb_bys2a<-function(beta2,llamda){
+  ksib<-sum((1-z+q)*(w^beta2))+RR2*(TP^beta2)
+  (beta2^(d2-1))*exp(beta2*(sum((1-z)*log(w))))*exp(-llamda*ksib)
+}
+fb_bys2b<-function(beta2,llamda){
+  ksib<-sum((1-z+q)*(w^beta2))+RR2*(TP^beta2)
+  (beta2^(a4+d2-1))*exp(beta2*(sum((1-z)*log(w))-b4))*exp(-llamda*ksib)
+}
+
+w0<-c(x,y)      
+kg<-c(rep(1,m),rep(0,n))  
+veri<-data.frame(kg,w0)
+verim<-veri[order(veri$w0),]
+w1<-verim[,2]    
+z0<-verim[,1]   
+if(sum(z0)==r|sum(z0)==0) next   
+if (max(w1)<TP) D1<-r else D1<-sum(w1<TP) 
+
+s<-q<-rep(0,r)
+for(o in 1:r){
+  if (R[o]==0) next
+  disc<-sample((o+1):length(w1),R[o])
+  w1<-w1[-disc];z0<-z0[-disc]
+  s[o]<-sum(verim$kg[disc]==1)
+  q[o]<-sum(verim$kg[disc]==0)
+}
+w<-w1;z<-z0 
+
+
+D1s<-median(c(k,r,D1))  
+d1<-sum(z[1:D1s]);d2<-sum((1-z)[1:D1s])
+if(k<D1&&D1<r) RR1<-m-sum(z[1:D1])-sum(s[1:D1]) else RR1<-0
+if(k<D1&&D1<r) RR2<-n-sum((1-z)[1:D1])-sum(q[1:D1]) else RR2<-0
+w<-w[1:D1s];z<-z[1:D1s];s<-s[1:D1s];q<-q[1:D1s] 
+
+tryCatch({ 
+  bthmn1a<-uniroot(fbet1,c(0.001,100))$root
+  bthmn1b<-uniroot(fbet1b,c(0.001,100))$root
+  bthmn2a<-uniroot(fbet2,c(0.001,100))$root
+  bthmn2b<-uniroot(fbet2b,c(0.001,100))$root
+}, error=function(e){})
+
+
+if(D1<k&&k<r)  bet1_mle<-bthmn1b else bet1_mle<-bthmn1a
+if(D1<k&&k<r)  bet2_mle<-bthmn2b else bet2_mle<-bthmn2a
+
+W11<-sum((w^bet1_mle)*(z+s))+(TP^bet1_mle)*RR1
+W12<-sum(((w^bet1_mle)*(z+s))[1:(D1s-1)])+(w[D1s]^bet1_mle)*(z[D1s]+(m-d1-sum(s[1:(D1s-1)])))
+W21<-sum((w^bet2_mle)*(1-z+q))+(TP^bet2_mle)*RR2
+W22<-sum(((w^bet2_mle)*(1-z+q))[1:(D1s-1)])+(w[D1s]^bet2_mle)*((1-z)[D1s]+(n-d2-sum(q[1:(D1s-1)])))
+
+
+if(D1<k&&k<r)  W1<-W12 else W1<-W11
+if(D1<k&&k<r)  W2<-W22 else W2<-W21 
+
+alf_mle<-d1/W1;lam_mle<-d2/W2 
+alf_mle;lam_mle;bet1_mle;bet2_mle
+
+W11t<-sum((w^bet1_mle)*(z+s)*log(w))+(TP^bet1_mle)*RR1*log(TP)
+W12t<-sum(((w^bet1_mle)*(z+s)*log(w))[1:(D1s-1)])+(w[D1s]^bet1_mle)*log(w[D1s])*(z[D1s]+(m-d1-sum(s[1:(D1s-1)])))
+W21t<-sum((w^bet2_mle)*(1-z+q)*log(w))+(TP^bet2_mle)*RR2*log(TP)
+W22t<-sum(((w^bet2_mle)*(1-z+q)*log(w))[1:(D1s-1)])+(w[D1s]^bet2_mle)*log(w[D1s])*((1-z)[D1s]+(n-d2-sum(q[1:(D1s-1)])))
+
+W11tt<-sum((w^bet1_mle)*(z+s)*((log(w))^2))+(TP^bet1_mle)*RR1*((log(TP))^2)
+W12tt<-sum(((w^bet1_mle)*(z+s)*((log(w))^2))[1:(D1s-1)])+(w[D1s]^bet1_mle)*((log(w[D1s]))^2)*(z[D1s]+(m-d1-sum(s[1:(D1s-1)])))
+W21tt<-sum((w^bet2_mle)*(1-z+q)*((log(w))^2))+(TP^bet2_mle)*RR2*((log(TP))^2)
+W22tt<-sum(((w^bet2_mle)*(1-z+q)*((log(w))^2))[1:(D1s-1)])+(w[D1s]^bet2_mle)*((log(w[D1s]))^2)*((1-z)[D1s]+(n-d2-sum(q[1:(D1s-1)])))
+
+if(D1<k&&k<r)  W1t<-W12t else W1t<-W11t
+if(D1<k&&k<r)  W2t<-W22t else W2t<-W21t 
+
+if(D1<k&&k<r)  W1tt<-W12tt else W1tt<-W11tt
+if(D1<k&&k<r)  W2tt<-W22tt else W2tt<-W21tt 
+
+I11<-d1/(alf_mle^2);I13<-I31<-W1t
+I12<-I21<-I14<-I41<-I32<-I23<-I34<-I43<-0
+I22<-d2/(lam_mle^2);I24<-I42<-W2t
+I33<-d1/(bet1_mle^2)+alf_mle*W1tt
+I44<-d2/(bet2_mle^2)+lam_mle*W2tt
+
+Fsr<-matrix(c(I11,I12,I13,I14,I21,I22,I23,I24,
+              I31,I32,I33,I34,I41,I42,I43,I44),ncol=4,nrow=4,byrow=T)  
+
+InvM<-solve(Fsr)
+
+ACIalf<-c(alf_mle-qnorm(0.975)*sqrt(InvM[1,1]),alf_mle+qnorm(0.975)*sqrt(InvM[1,1]))
+ACIlam<-c(lam_mle-qnorm(0.975)*sqrt(InvM[2,2]),lam_mle+qnorm(0.975)*sqrt(InvM[2,2]))
+ACIbt1<-c(bet1_mle-qnorm(0.975)*sqrt(InvM[3,3]),bet1_mle+qnorm(0.975)*sqrt(InvM[3,3]))
+ACIbt2<-c(bet2_mle-qnorm(0.975)*sqrt(InvM[4,4]),bet2_mle+qnorm(0.975)*sqrt(InvM[4,4]))
+
+
+alf_boot<-lam_boot<-bet1_boot<-bet2_boot<-0
+tbalf<-tblam<-tbbt1<-tbbt2<-0
+BPalf<-BPlam<-BPbt1<-BPbt2<-matrix(0,BOOT,2)
+BTalf<-BTlam<-BTbt1<-BTbt2<-matrix(0,BOOT,2)
+
+for(i in 1:BOOT){ 
+  
+  xb<-(-log(1-runif(m))/alf_mle)^(1/bet1_mle)
+  yb<-(-log(1-runif(n))/lam_mle)^(1/bet2_mle) 
+  w0b<-c(xb,yb)     
+  kgb<-c(rep(1,m),rep(0,n))  
+  verib<-data.frame(kgb,w0b)
+  verimb<-verib[order(verib$w0b),]
+  w1b<-verimb[,2]    
+  z0b<-verimb[,1]   
+  if(sum(z0b)==r|sum(z0b)==0) next   
+  if (max(w1b)<TP) D1b<-r else D1b<-sum(w1b<TP)  
+  
+  sb<-qb<-rep(0,r)
+  for(o in 1:r){
+    if (R[o]==0) next
+    disc<-sample((o+1):length(w1b),R[o])
+    w1b<-w1b[-disc];z0b<-z0b[-disc]
+    sb[o]<-sum(verimb$kgb[disc]==1)
+    qb[o]<-sum(verimb$kgb[disc]==0)
+  }
+  wb<-w1b;zb<-z0b 
+  
+ 
+  D1sb<-median(c(k,r,D1b)) 
+  d1b<-sum(zb[1:D1sb]);d2b<-sum((1-zb)[1:D1sb])
+  if(k<D1b&&D1b<r) RR1b<-m-sum(zb[1:D1b])-sum(sb[1:D1b]) else RR1b<-0
+  if(k<D1b&&D1b<r) RR2b<-n-sum((1-zb)[1:D1b])-sum(qb[1:D1b]) else RR2b<-0
+  wb<-wb[1:D1sb];zb<-zb[1:D1sb];sb<-sb[1:D1sb];qb<-qb[1:D1sb] 
+
+  tryCatch({ 
+    bthmn1a_boot<-uniroot(fbet1_boot,c(0.001,100))$root
+    bthmn1b_boot<-uniroot(fbet1b_boot,c(0.001,100))$root
+    bthmn2a_boot<-uniroot(fbet2_boot,c(0.001,100))$root
+    bthmn2b_boot<-uniroot(fbet2b_boot,c(0.001,100))$root
+  }, error=function(e){})
+  
+  if(D1b<k&&k<r)  b1_boot<-bthmn1b_boot else b1_boot<-bthmn1a_boot
+  if(D1b<k&&k<r)  b2_boot<-bthmn2b_boot else b2_boot<-bthmn2a_boot
+  
+  W11b<-sum((wb^b1_boot)*(zb+sb))+(TP^b1_boot)*RR1b
+  W12b<-sum(((wb^b1_boot)*(zb+sb))[1:(D1sb-1)])+(wb[D1sb]^b1_boot)*(zb[D1sb]+(m-d1b-sum(sb[1:(D1sb-1)])))
+  W21b<-sum((wb^b2_boot)*(1-zb+qb))+(TP^b2_boot)*RR2b
+  W22b<-sum(((wb^b2_boot)*(1-zb+qb))[1:(D1sb-1)])+(wb[D1sb]^b2_boot)*((1-zb)[D1sb]+(n-d2b-sum(qb[1:(D1sb-1)])))
+  
+  if(D1b<k&&k<r)  W1b<-W12b else W1b<-W11b
+  if(D1b<k&&k<r)  W2b<-W22b else W2b<-W21b 
+  
+  a_boot<-d1b/W1b
+  l_boot<-d2b/W2b   
+  
+  W11tb<-sum((wb^b1_boot)*(zb+sb)*log(wb))+(TP^b1_boot)*RR1b*log(TP)
+  W12tb<-sum(((wb^b1_boot)*(zb+sb)*log(wb))[1:(D1sb-1)])+(wb[D1sb]^b1_boot)*log(wb[D1sb])*(zb[D1sb]+(m-d1b-sum(sb[1:(D1sb-1)])))
+  W21tb<-sum((wb^b2_boot)*(1-zb+qb)*log(wb))+(TP^b2_boot)*RR2b*log(TP)
+  W22tb<-sum(((wb^b2_boot)*(1-zb+qb)*log(wb))[1:(D1sb-1)])+(wb[D1sb]^b2_boot)*log(wb[D1sb])*((1-zb)[D1sb]+(n-d2b-sum(qb[1:(D1sb-1)])))
+  
+  W11ttb<-sum((wb^b1_boot)*(zb+sb)*((log(wb))^2))+(TP^b1_boot)*RR1b*((log(TP))^2)
+  W12ttb<-sum(((wb^b1_boot)*(zb+sb)*((log(wb))^2))[1:(D1sb-1)])+(wb[D1sb]^b1_boot)*((log(wb[D1sb]))^2)*(zb[D1sb]+(m-d1b-sum(sb[1:(D1sb-1)])))
+  W21ttb<-sum((wb^b2_boot)*(1-zb+qb)*((log(wb))^2))+(TP^b2_boot)*RR2b*((log(TP))^2)
+  W22ttb<-sum(((wb^b2_boot)*(1-zb+qb)*((log(wb))^2))[1:(D1sb-1)])+(wb[D1sb]^b2_boot)*((log(wb[D1sb]))^2)*((1-zb)[D1sb]+(n-d2b-sum(qb[1:(D1sb-1)])))
+  
+  if(D1b<k&&k<r)  W1tb<-W12tb else W1tb<-W11tb
+  if(D1b<k&&k<r)  W2tb<-W22tb else W2tb<-W21tb 
+  
+  if(D1b<k&&k<r)  W1ttb<-W12ttb else W1ttb<-W11ttb
+  if(D1b<k&&k<r)  W2ttb<-W22ttb else W2ttb<-W21ttb 
+  
+  I11b<-d1b/(a_boot^2);I13b<-I31b<-W1tb
+  I12b<-I21b<-I14b<-I41b<-I32b<-I23b<-I34b<-I43b<-0
+  I22b<-d2b/(l_boot^2);I24b<-I42b<-W2tb
+  I33b<-d1b/(b1_boot^2)+a_boot*W1ttb
+  I44b<-d2b/(b2_boot^2)+l_boot*W2ttb
+  
+  Fsrb<-matrix(c(I11b,I12b,I13b,I14b,I21b,I22b,I23b,I24b,
+                 I31b,I32b,I33b,I34b,I41b,I42b,I43b,I44b),ncol=4,nrow=4,byrow=T)  
+  
+  InvMb<-solve(Fsrb)
+  
+  tbalf[i]<-(a_boot-alf_mle)/sqrt(InvMb[1,1])
+  tblam[i]<-(l_boot-lam_mle)/sqrt(InvMb[2,2])
+  tbbt1[i]<-(b1_boot-bet1_mle)/sqrt(InvMb[3,3])
+  tbbt2[i]<-(b2_boot-bet2_mle)/sqrt(InvMb[4,4])
+  
+  alf_boot[i]<-a_boot;lam_boot[i]<-l_boot;bet1_boot[i]<-b1_boot;bet2_boot[i]<-b2_boot
+  print(i)
+}
+
+tbalf<-na.omit(tbalf);tblam<-na.omit(tblam);tbbt1<-na.omit(tbbt1);tbbt2<-na.omit(tbbt2)
+alf_boot<-na.omit(alf_boot);lam_boot<-na.omit(lam_boot);bet1_boot<-na.omit(bet1_boot);bet2_boot<-na.omit(bet2_boot)
+BPalf<-quantile(alf_boot,c(0.025,0.975))
+BPlam<-quantile(lam_boot,c(0.025,0.975))
+BPbt1<-quantile(bet1_boot,c(0.025,0.975))
+BPbt2<-quantile(bet2_boot,c(0.025,0.975))
+BTalf<-c(alf_mle-quantile(tbalf,c(0.975))*sqrt(InvM[1,1]),alf_mle-quantile(tbalf,c(0.025))*sqrt(InvM[1,1]))
+BTlam<-c(lam_mle-quantile(tblam,c(0.975))*sqrt(InvM[2,2]),lam_mle-quantile(tblam,c(0.025))*sqrt(InvM[2,2]))
+BTbt1<-c(bet1_mle-quantile(tbbt1,c(0.975))*sqrt(InvM[3,3]),bet1_mle-quantile(tbbt1,c(0.025))*sqrt(InvM[3,3]))
+BTbt2<-c(bet2_mle-quantile(tbbt2,c(0.975))*sqrt(InvM[4,4]),bet2_mle-quantile(tbbt2,c(0.025))*sqrt(InvM[4,4]))
+
+
+a1_bys<-l1_bys<-b11_bys<-b21_bys<-0
+a2_bys<-l2_bys<-b12_bys<-b22_bys<-0
+HPDalf1<-HPDlam1<-HPDbt11<-HPDbt21<-matrix(0,MCN,2)
+HPDalf2<-HPDlam2<-HPDbt12<-HPDbt22<-matrix(0,MCN,2)
+MH_al1<-alf_mle;MH_lm1<-lam_mle;MH_bt11<-bet1_mle;MH_bt21<-bet2_mle
+MH_al2<-alf_mle;MH_lm2<-lam_mle;MH_bt12<-bet1_mle;MH_bt22<-bet2_mle
+
+Vbeta1<-sqrt(InvMb[3,3]);Vbeta2<-sqrt(InvMb[4,4])
+a1<-alf_mle;a2<-lam_mle;a3<-bet1_mle;a4<-bet2_mle;b1<-b2<-b3<-b4<-1
+
+for(jj in 2:MCMC){
+  
+  MH_al1[jj]<-rgamma(1,d1,sum((z+s)*(w^MH_bt11[jj-1]))+RR1*(TP^MH_bt11[jj-1]))
+  MH_al2[jj]<-rgamma(1,d1+a1,b1+sum((z+s)*(w^MH_bt12[jj-1]))+RR1*(TP^MH_bt12[jj-1]))
+  MH_lm1[jj]<-rgamma(1,d2,sum((1-z+q)*(w^MH_bt21[jj-1]))+RR2*(TP^MH_bt21[jj-1]))
+  MH_lm2[jj]<-rgamma(1,d2+a2,b2+sum((1-z+q)*(w^MH_bt22[jj-1]))+RR2*(TP^MH_bt22[jj-1]))
+  
+  v0a<-MH_bt11[jj-1]  
+  v1a<-abs(rnorm(1,v0a,Vbeta1))
+  rndma<-runif(1)
+  pm1<-min((fb_bys1a(v1a,MH_al1[jj])*rnorm(1,v0a,Vbeta1))/(fb_bys1a(v0a,MH_al1[jj])*rnorm(1,v1a,Vbeta1)),1)
+  if(rndma<pm1) MH_bt11[jj]<-v1a else MH_bt11[jj]<-v0a
+  
+  v0b<-MH_bt12[jj-1]  
+  v1b<-abs(rnorm(1,v0b,Vbeta1))
+  rndmb<-runif(1)
+  pm2<-min((fb_bys1b(v1b,MH_al2[jj])*rnorm(1,v0b,Vbeta1))/(fb_bys1b(v0b,MH_al2[jj])*rnorm(1,v1b,Vbeta1)),1)
+  if(rndmb<pm2) MH_bt12[jj]<-v1b else MH_bt12[jj]<-v0b
+  
+  
+  v0c<-MH_bt21[jj-1]  
+  v1c<-abs(rnorm(1,v0c,Vbeta2))
+  rndmc<-runif(1)
+  pm3<-min((fb_bys2a(v1c,MH_lm1[jj])*rnorm(1,v0c,Vbeta2))/(fb_bys2a(v0c,MH_lm1[jj])*rnorm(1,v1c,Vbeta2)),1)
+  if(rndmc<pm3) MH_bt21[jj]<-v1c else MH_bt21[jj]<-v0c
+  
+  
+  v0d<-MH_bt22[jj-1]  
+  v1d<-abs(rnorm(1,v0d,Vbeta2))
+  rndmd<-runif(1)
+  pm4<-min((fb_bys2b(v1d,MH_lm2[jj])*rnorm(1,v0d,Vbeta2))/(fb_bys2b(v0d,MH_lm2[jj])*rnorm(1,v1d,Vbeta2)),1)
+  if(rndmd<pm4) MH_bt22[jj]<-v1d else MH_bt22[jj]<-v0d
+  print(jj)
+} 
+
+a1_bys<-mean(na.omit(MH_al1[thinning]))  
+a2_bys<-mean(na.omit(MH_al2[thinning]))   
+l1_bys<-mean(na.omit(MH_lm1[thinning]))  
+l2_bys<-mean(na.omit(MH_lm2[thinning]))  
+b11_bys<-mean(na.omit(MH_bt11[thinning]))  
+b12_bys<-mean(na.omit(MH_bt12[thinning]))  
+b21_bys<-mean(na.omit(MH_bt21[thinning]))  
+b22_bys<-mean(na.omit(MH_bt22[thinning]))  
+
+HPDalf1<-quantile(na.omit(MH_al1[thinning]),c(0.025,0.975))
+HPDalf2<-quantile(na.omit(MH_al2[thinning]),c(0.025,0.975))
+HPDlam1<-quantile(na.omit(MH_lm1[thinning]),c(0.025,0.975))
+HPDlam2<-quantile(na.omit(MH_lm2[thinning]),c(0.025,0.975))
+HPDbt11<-quantile(na.omit(MH_bt11[thinning]),c(0.025,0.975))
+HPDbt12<-quantile(na.omit(MH_bt12[thinning]),c(0.025,0.975))
+HPDbt21<-quantile(na.omit(MH_bt21[thinning]),c(0.025,0.975))
+HPDbt22<-quantile(na.omit(MH_bt22[thinning]),c(0.025,0.975)) 
+
+row1<-as.numeric(c(alf_mle,a1_bys,a2_bys,diff(ACIalf),diff(BPalf),diff(BTalf),diff(HPDalf1),diff(HPDalf2)))
+row2<-as.numeric(c(bet1_mle,b11_bys,b12_bys,diff(ACIbt1),diff(BPbt1),diff(BTbt1),diff(HPDbt11),diff(HPDbt12)))
+row3<-as.numeric(c(lam_mle,l1_bys,l2_bys,diff(ACIlam),diff(BPlam),diff(BTlam),diff(HPDlam1),diff(HPDlam2)))
+row4<-as.numeric(c(bet2_mle,b21_bys,b22_bys,diff(ACIbt2),diff(BPbt2),diff(BTbt2),diff(HPDbt21),diff(HPDbt22)))
+
+data.frame(rbind(row1,row2,row3,row4))
+write_xlsx(data.frame(rbind(row1,row2,row3,row4)), "Sonuc.xlsx")
